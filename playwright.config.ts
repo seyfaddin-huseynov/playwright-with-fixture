@@ -3,10 +3,10 @@ import { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   use: {
-    headless: false,
-    launchOptions: {
-      slowMo: 80,
-    },
+    headless: true,
+    // launchOptions: {
+    //   slowMo: 80,
+    // },
     viewport: { width: 1460, height: 800 },
     // ignoreHTTPSErrors: false,
     video: "retain-on-failure", // 'on'
