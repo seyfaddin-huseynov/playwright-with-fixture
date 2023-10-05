@@ -6,7 +6,6 @@ export const test = base.extend<{ landingPage: LandingPage }>({
     // Set up the fixture.
     const landingPage = new LandingPage(page);
     await landingPage.goto();
-
     // Use the fixture value in the test.
     await use(landingPage);
   },
