@@ -1,4 +1,4 @@
-# interview sample project
+# Ready to use Playwright with Fixtures
 This project is to provide a runnable test framework setup in playwright
 
 ## to setup the framework:
@@ -6,5 +6,4 @@ This project is to provide a runnable test framework setup in playwright
 yarn
 ```
 ## Recommended IDE: VSCode
-## test code challenge questions are in src/specs/sample.specs.ts
 
