@@ -1,26 +1,79 @@
-// playwright.config.ts
-import { PlaywrightTestConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+import path from "path";
 
-const config: PlaywrightTestConfig = {
-  use: {
-    headless: true,
-    // launchOptions: {
-    //   slowMo: 80,
-    // },
-    viewport: { width: 1460, height: 800 },
-    // ignoreHTTPSErrors: false,
-    video: "retain-on-failure", // 'on'
-    screenshot: "only-on-failure",
-    browserName: "webkit",
-    baseURL: process.env.URL === undefined ? "" : process.env.URL,
-  },
-  timeout: 1 * 60 * 1000,
-  retries: 0,
-  testMatch: /.*\.spec\.ts/,
-  reporter: [
-    ["list"],
-    ["json", { outputFile: "test-results/report/test-results.json" }],
-  ],
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+
+export const STORAGE_STATE = path.join(__dirname, ".auth/user.json");
+
+export default defineConfig({
+  testDir: "./src/specs",
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
-};
-export default config;
+  timeout: 60_000,
+  expect: {
+    timeout: 10_000,
+    toHaveScreenshot: { maxDiffPixelRatio: 0.02 },
+  },
+  reporter: process.env.CI
+    ? [["list"], ["blob"], ["github"]]
+    : [["list"], ["html", { open: "never" }]],
+  use: {
+    baseURL: process.env.BASE_URL ?? "https://www.saucedemo.com",
+    trace: "retain-on-failure",
+    video: "retain-on-failure",
+    screenshot: "only-on-failure",
+    viewport: { width: 1460, height: 800 },
+  },
+  projects: [
+    // Logs in once and saves the session for all UI projects
+    {
+      name: "setup",
+      testMatch: /.*\.setup\.ts/,
+    },
+    {
+      name: "chromium",
+      testDir: "./src/specs/ui",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], storageState: STORAGE_STATE },
+    },
+    {
+      name: "firefox",
+      testDir: "./src/specs/ui",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Firefox"], storageState: STORAGE_STATE },
+    },
+    {
+      name: "webkit",
+      testDir: "./src/specs/ui",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Safari"], storageState: STORAGE_STATE },
+    },
+    {
+      name: "mobile-chrome",
+      testDir: "./src/specs/ui",
+      dependencies: ["setup"],
+      use: { ...devices["Pixel 7"], storageState: STORAGE_STATE },
+    },
+    // Pure API tests — no browser context needed
+    {
+      name: "api",
+      testDir: "./src/specs/api",
+    },
+    // Accessibility scans with axe-core
+    {
+      name: "a11y",
+      testDir: "./src/specs/a11y",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    // Visual regression (pinned to one browser for stable pixels)
+    {
+      name: "visual",
+      testDir: "./src/specs/visual",
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], storageState: STORAGE_STATE },
+    },
+  ],
+});
